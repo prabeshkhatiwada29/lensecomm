@@ -20,20 +20,20 @@ def renderRegisterForm(request):
      user.save()
      
      return redirect('/lens/login')
-           
-    
+   
     else:
         # Render the registration form
-       
         return render(request, 'auth/register.html')
 def renderLoginForm(request):
     if request.method == 'POST':
-       email=request.POST['email']
+       username=request.POST['username']
        password=request.POST['password']
-       user = authenticate(request, username=email, password=password)
+       user = authenticate(request, username=username, password=password)
+       print(username,password,user)
+         # Check if the user is authenticated   
        if user is not None:
-          login(request, user)
-          return redirect('/lens/item.html')
+          login(request,user)
+          return redirect('/lens/item')
        else:
             messages.error(request, 'Invalid email or password')
             return redirect('/lens/login')

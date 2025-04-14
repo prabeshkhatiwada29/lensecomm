@@ -4,12 +4,172 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organic juice </title>
+    <title>Organic Juice</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="{% static 'src/styles.css' %}" rel="stylesheet">
-
-
     <script>
+        let cart = [];
+
+        function addToCart(productName, price) {
+            const itemIndex = cart.findIndex(item => item.name === productName);
+            if (itemIndex > -1) {
+                cart[itemIndex].quantity += 1;
+            } else {
+                cart.push({ name: productName, price: price, quantity: 1 });
+            }
+            updateCartDropdown();
+            updateCartBadge();
+
+            // Show notification in the cart section
+            const cartDropdown = document.getElementById('cartDropdownContent');
+            const notification = document.createElement('div');
+            notification.className = 'bg-green-100 text-green-800 text-sm p-2 rounded mb-2';
+            notification.innerText = `${productName} added to cart!`;
+            cartDropdown.prepend(notification);
+
+            // Remove notification after 2 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
+
+        function updateCartBadge() {
+            const cartButton = document.getElementById('cartButton');
+            let badge = cartButton.querySelector('.cart-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'cart-badge absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center';
+                cartButton.appendChild(badge);
+            }
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            badge.innerText = totalItems;
+            badge.style.display = totalItems > 0 ? 'flex' : 'none';
+        }
+
+        function removeFromCart(productName) {
+            cart = cart.filter(item => item.name !== productName);
+            updateCartDropdown();
+            updateCartBadge();
+        }
+
+        function updateQuantity(productName, quantity) {
+            const itemIndex = cart.findIndex(item => item.name === productName);
+            if (itemIndex > -1) {
+                cart[itemIndex].quantity = quantity > 0 ? quantity : 1;
+            }
+            updateCartDropdown();
+        }
+
+        function calculateTotal() {
+            return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+        }
+
+        function updateCartDropdown() {
+            const cartDropdown = document.getElementById('cartDropdownContent');
+            cartDropdown.innerHTML = '';
+            if (cart.length === 0) {
+                cartDropdown.innerHTML = '<p class="text-gray-500 dark:text-gray-400">Your cart is empty.</p>';
+            } else {
+                cart.forEach(item => {
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'flex justify-between items-center py-2';
+                    cartItem.innerHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-900 dark:text-white">${item.name}</span>
+                            <input type="number" min="1" value="${item.quantity}" class="w-12 text-center text-sm border border-gray-300 dark:border-gray-600 rounded"
+                                onchange="updateQuantity('${item.name}', this.value)">
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">₹${(item.price * item.quantity).toFixed(2)}</span>
+                            <button class="text-red-500 hover:text-red-700" onclick="removeFromCart('${item.name}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    cartDropdown.appendChild(cartItem);
+                });
+
+                // Add checkout form
+                const checkoutForm = document.createElement('div');
+                checkoutForm.className = 'border-t border-gray-300 dark:border-gray-600 mt-4 pt-4';
+                checkoutForm.innerHTML = `
+                    <form id="checkoutForm" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="Enter your full name" required
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
+                            <input type="text" id="address" name="address" placeholder="Enter your address" required
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Payment Method</label>
+                            <div class="flex items-center space-x-4">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="paymentMethod" value="esewa" required>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">eSewa</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="paymentMethod" value="khalti" required>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Khalti</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="paymentMethod" value="cod" required>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Cash on Delivery</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">Total: ₹${calculateTotal()}</span>
+                            <button type="submit" class="bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors">
+                                Place Order
+                            </button>
+                        </div>
+                    </form>
+                `;
+                cartDropdown.appendChild(checkoutForm);
+
+                // Add event listener for form submission
+                const checkoutFormElement = document.getElementById('checkoutForm');
+                checkoutFormElement.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const name = document.getElementById('name').value;
+                    const address = document.getElementById('address').value;
+                    const phone = document.getElementById('phone').value;
+                    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+                    alert(`Order placed successfully!\nName: ${name}\nAddress: ${address}\nPhone: ${phone}\nPayment Method: ${paymentMethod}`);
+                    // Add logic to process the order
+                });
+            }
+        }
+
+        function toggleCartDropdown() {
+            const cartDropdown = document.getElementById('cartDropdownContent');
+            cartDropdown.classList.toggle('hidden');
+            if (!cartDropdown.classList.contains('hidden')) {
+                cartDropdown.classList.add('animate-slide-down');
+                setTimeout(() => cartDropdown.classList.remove('animate-slide-down'), 300);
+            }
+        }
+
+        function proceedToCheckout() {
+            if (cart.length === 0) {
+                alert('Your cart is empty.');
+            } else {
+                alert(`Proceeding to checkout. Total: ₹${calculateTotal()}`);
+                // Add logic to redirect to a checkout page or process the order
+            }
+        }
+
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
         }
@@ -45,7 +205,14 @@
         }
         .category-overlay:hover {
             transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn-hover-effect {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-hover-effect:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -76,6 +243,18 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
                     </button>
+
+                    <div class="relative">
+                        <button id="cartButton" class="p-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                            onclick="toggleCartDropdown()">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8H19M7 13L5.4 5M9 21a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4z" />
+                            </svg>
+                        </button>
+                        <div id="cartDropdownContent" class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-700 shadow-lg rounded-lg p-4 hidden overflow-y-auto max-h-64">
+                            <p class="text-gray-500 dark:text-gray-400">Your cart is empty.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,7 +263,7 @@
     <!-- Hero Section -->
     <div class="relative bg-gradient-to-br from-primary-50 to-white dark:from-gray-800 dark:to-gray-900">
         <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-            <h1 class="text-4xl font-bold text-primary-800 dark:text-white mb-8 animate-bounce-slow">Our Jice Collection </h1>
+            <h1 class="text-4xl font-bold text-primary-800 dark:text-white mb-8 animate-bounce-slow">Our Juice Collection </h1>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- Product Cards with Enhanced Design -->
                 <div class="bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden transform transition-all hover:-translate-y-2 hover:shadow-2xl">
@@ -96,7 +275,8 @@
                             <p class="text-primary-600 font-bold">₹99.99</p>
                             <span class="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs">New</span>
                         </div>
-                        <button class="mt-4 w-full bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors">
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-500 transition-colors btn-hover-effect"
+                            onclick="addToCart('Jhapali', 99.99)">
                             Add to Cart
                         </button>
                     </div>
@@ -112,11 +292,74 @@
                             <p class="text-primary-600 font-bold">₹79.99</p>
                             <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Sale</span>
                         </div>
-                        <button class="mt-4 w-full bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors">
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors btn-hover-effect"
+                            onclick="addToCart('Pokharali', 79.99)">
                             Add to Cart
                         </button>
                     </div>
                 </div>
+
+                <div class="bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden transform transition-all hover:-translate-y-2 hover:shadow-2xl">
+                    <img src="https://shop.unclematts.com/cdn/shop/products/OJPulpFree.jpg?v=1669930614" 
+                        alt="Summer Collection" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-primary-800 dark:text-white">Chiller</h3>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-primary-600 font-bold">₹79.99</p>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Sale</span>
+                        </div>
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors btn-hover-effect"
+                            onclick="addToCart('Chiller', 79.99)">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden transform transition-all hover:-translate-y-2 hover:shadow-2xl">
+                    <img src="https://shop.unclematts.com/cdn/shop/products/OJPulpFree.jpg?v=1669930614" 
+                        alt="Summer Collection" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-primary-800 dark:text-white">Fresher</h3>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-primary-600 font-bold">₹79.99</p>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Sale</span>
+                        </div>
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors btn-hover-effect"
+                            onclick="addToCart('Fresher', 79.99)">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden transform transition-all hover:-translate-y-2 hover:shadow-2xl">
+                    <img src="https://shop.unclematts.com/cdn/shop/products/OJPulpFree.jpg?v=1669930614" 
+                        alt="Summer Collection" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-primary-800 dark:text-white">Mango</h3>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-primary-600 font-bold">₹79.99</p>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Sale</span>
+                        </div>
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors btn-hover-effect"
+                            onclick="addToCart('Mango', 79.99)">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden transform transition-all hover:-translate-y-2 hover:shadow-2xl">
+                    <img src="https://shop.unclematts.com/cdn/shop/products/OJPulpFree.jpg?v=1669930614" 
+                        alt="Summer Collection" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold text-primary-800 dark:text-white">Japanees</h3>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-primary-600 font-bold">₹79.99</p>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Sale</span>
+                        </div>
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors btn-hover-effect"
+                            onclick="addToCart('Japanees', 79.99)">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
 
                 <!-- Two More Product Cards -->
                 <div class="bg-white dark:bg-gray-700 rounded-2xl shadow-lg overflow-hidden transform transition-all hover:-translate-y-2 hover:shadow-2xl">
@@ -126,9 +369,10 @@
                         <h3 class="text-xl font-semibold text-primary-800 dark:text-white">Dharana</h3>
                         <div class="flex justify-between items-center mt-2">
                             <p class="text-primary-600 font-bold">₹129.99</p>
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Limited</span>
+                            <span class="bg-blue-500 text-blue-800 px-2 py-1 rounded-full text-xs">Limited</span>
                         </div>
-                        <button class="mt-4 w-full bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors">
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors btn-hover-effect"
+                            onclick="addToCart('Dharana', 129.99)">
                             Add to Cart
                         </button>
                     </div>
@@ -143,10 +387,12 @@
                             <p class="text-primary-600 font-bold">₹199.99</p>
                             <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Premium</span>
                         </div>
-                        <button class="mt-4 w-full bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 transition-colors">
+                        <button class="mt-4 w-full bg-primary-500 text-black py-2 px-4 rounded-lg hover:bg-blue-500 transition-colors btn-hover-effect"
+                            onclick="addToCart('Bhaktapura', 199.99)">
                             Add to Cart
                         </button>
                     </div>
+                    
                 </div>
             </div>
         </div>
@@ -161,42 +407,54 @@
                     <img src="https://www.drinkalmighty.com/cdn/shop/files/Sparkling-Water-GIF-NZ-Small.gif?v=1729634717" 
                         alt="Men's Wear" class="w-full h-64 object-cover">
                     <div class="absolute inset-0 bg-primary-500 bg-opacity-40 hover:bg-opacity-50 transition-all duration-300 rounded-2xl"></div>
-                    <span class="absolute bottom-4 left-4 text-white font-semibold text-xl drop-shadow-lg">Slicy</span>
+                    <span class="absolute bottom-4 left-4 text-balck font-semibold text-xl drop-shadow-lg">Slicy</span>
                 </div>
                 <div class="relative category-overlay overflow-hidden rounded-2xl shadow-lg">
                     <img src="https://www.drinkalmighty.com/cdn/shop/files/Sparkling-Water-GIF-NZ-Small.gif?v=1729634717"
                         alt="Accessories" class="w-full h-64 object-cover">
                     <div class="absolute inset-0 bg-primary-500 bg-opacity-40 hover:bg-opacity-50 transition-all duration-300 rounded-2xl"></div>
-                    <span class="absolute bottom-4 left-4 text-white font-semibold text-xl drop-shadow-lg">Organic</span>
+                    <span class="absolute bottom-4 left-4 text-balck font-semibold text-xl drop-shadow-lg">Organic</span>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Footer with SVG Elements -->
-    <footer class="bg-primary-50 dark:bg-orange-400">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h3 class="text-lg font-semibold text-primary-800 dark:text-white mb-4">About Us</h3>
-                    <p class="text-primary-700 dark:text-gray-300">Could you clarify what you mean by "change organic juice"? Are you looking for a new name, tagline, or something else related to organic juice?
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-primary-800 dark:text-white mb-4">Quick Links</h3>
-                    <ul class="space-y-2 text-primary-700 dark:text-gray-300">
-                        <li class="hover:text-primary-500 transition-colors">Home</li>
-                        <li class="hover:text-primary-500 transition-colors">Shop</li>
-                        <li class="hover:text-primary-500 transition-colors">Categories</li>
-                        <li class="hover:text-primary-500 transition-colors">Contact</li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-primary-800 dark:text-white mb-4">Contact Us</h3>
-                    <p class="text-primary-700 dark:text-gray-300">Email: Organic@gmail.com</p>
-                    <p class="text-primary-700 dark:text-gray-300">Phone: 0565612222</p>
+    <section class="bg-gray-100">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:py-20 lg:px-8">
+            <div class="max-w-2xl lg:max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900">Visit Our Location</h2>
+                <p class="mt-4 text-lg text-gray-500">Nepal Best Organic Juice Company.</p>
+            </div>
+            <div class="mt-16 lg:mt-20">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="rounded-lg overflow-hidden">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m26!1m12!1m3!1d681287.579981312!2d82.91541250043852!3d28.73175405425452!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m11!3e6!4m5!1s0x3995937bbf0376ff%3A0xf6cf823b25802164!2sPokhara!3m2!1d28.2095831!2d83.9855674!4m3!3m2!1d28.385368699999997!2d83.4730367!5e0!3m2!1sen!2snp!4v1744254430525!5m2!1sen!2snp" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>"
+                           </iframe>
+                    </div>
+                    <div>
+                        <div class="max-w-full mx-auto rounded-lg overflow-hidden">
+                            <div class="px-6 py-4">
+                                <h3 class="text-lg font-medium text-gray-900">Our Address</h3>
+                                <p class="mt-1 text-gray-600">pokhara</p>
+                            </div>
+                            <div class="border-t border-gray-200 px-6 py-4">
+                                <h3 class="text-lg font-medium text-gray-900">Hours</h3>
+                                <p class="mt-1 text-gray-600">Monday - Friday: 9am - 5pm</p>
+                                <p class="mt-1 text-gray-600">Saturday: 10am - 4pm</p>
+                                <p class="mt-1 text-gray-600">Sunday: Closed</p>
+                            </div>
+                            <div class="border-t border-gray-200 px-6 py-4">
+                                <h3 class="text-lg font-medium text-gray-900">Contact</h3>
+                                <p class="mt-1 text-gray-600">Email: Organic@gmail.com</p>
+                                <p class="mt-1 text-gray-600">Phone: +1 23494 34993</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </footer>
+    </section>
 </body>
 </html>

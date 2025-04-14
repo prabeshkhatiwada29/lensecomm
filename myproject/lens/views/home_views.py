@@ -1,8 +1,9 @@
 
 from django.shortcuts import render
 
-def renderDashboard(request):
-    return render(request, 'auth/dashboard.html')
 
 def renderItem(request):
     return render(request, 'auth/item.html')
+
+def renderlanding(request):
+    return render(request, 'auth/landingpage.html')
