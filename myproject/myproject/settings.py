@@ -41,6 +41,9 @@ INSTALLED_APPS = [
 
     'lens',
     'cart',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+
     
     
 
@@ -55,6 +58,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AuthenticationMiddleware',
+
+
+
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -77,7 +84,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
+SOCIALACCOUNT_PROVIDERS = {
 
+
+    'google': {
+        'APP': {
+            'client_id':'',
+            'secret': ''
+           
+            },
+            'SCOPE': [
+                'profile',  
+                'email',
+            ],
+
+}
+}
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
