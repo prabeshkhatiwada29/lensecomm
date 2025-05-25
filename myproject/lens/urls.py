@@ -12,3 +12,4 @@ urlpatterns = [
     path('checkout', renderCheckout,),
     path('order-success', renderorderSuccess),
 ]
+
